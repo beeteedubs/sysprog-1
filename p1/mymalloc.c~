@@ -1,0 +1,38 @@
+#include <stdio.h>
+#include <string.h>
+#include "mymalloc.h"
+
+//x is # of bytes
+//one given, scan array
+//how scan?
+//  start at beginning of array, check for magic number
+//      if magic number, that means metadata so skip ahead appropriately and check progress
+//      else scan next x bytes checking for magic number
+//          if can't scan x bytes by hitting magic number, skip ahead appropriately
+//          else create the metadata and throw in user data
+//skip ahead appropriately:
+//  traverse until see the short "use", and then jump ahead that much + 2
+//throw in user data:
+//  returning a pointer should be a memory address of arr
+
+//static char arr[4096];
+
+void* mymalloc(int x){
+};
+
+
+void myfree(int x){
+    printf("\nThis is x + 2: \n");
+
+};
+
+int main() {
+  char arr[6];
+  int data = 200;
+  memcpy(&arr[2], (void*)&data, sizeof(data));
+  int temp[0];
+  memcpy(&temp[0], &arr[2], sizeof(int*));
+  printf("temp = %d \n", temp[0]);
+  return 0;
+}
+
