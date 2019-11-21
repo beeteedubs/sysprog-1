@@ -1,0 +1,32 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+
+int search(int * array, int target) {
+  pid_t id; // pid of current proccess
+  printf("Before fork: ID is %d\n", getpid());
+  id = fork();// process 1 and 2 started
+  
+  if(id == 0) { //if it is the child process
+    printf("I am child\n");
+    printf("I have PID: %d\n", getpid());
+    return 0;
+  }
+  else if(id == -1) {//zombie child
+    printf("I am zombie child\n");
+    return 0;
+  }
+  else { //is parent process
+    printf("I am parent"\n);
+    printf("Fork returned ID %d\n", id);
+    printf("I have ID %d\n", getpid());
+    int status = 0;
+    printf("calling wait\n");
+    wait(&status);
+    printf("after waiting\n");
+    printf("return value of child is %d\n", WEXITSTATUS(status));
+  }
+  return 0;
+} 
