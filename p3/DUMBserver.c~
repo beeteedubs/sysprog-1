@@ -1,0 +1,135 @@
+#include <stdio.h>
+#include <stdio.h>
+#include <sys/socket.h>
+#include <stdlib.h>
+#include <netinet/in.h>
+#include <string.h>
+#include "DUMBserver.h"
+
+
+void* threadRequests(void* newSocket) {
+  int valRead;
+  int open = 0;
+  int close = 0;
+  struct thread_vars* var = (struct thread_vars*) newSocket;
+  int new_socket = var->socket;//gives the thread the socket
+  struct mailBox* boxes = var->box;
+  //printf("%d\n", new_socket);
+  char buffer[1024] = {0};
+
+  valRead = read(new_socket, buffer, 1024);
+  printf("%s\n", buffer);
+  //HELLO METHOD
+  if(strcmp(buffer, "HELLO") == 0) {
+    send(new_socket, "HELLO DUMBv0 ready!\n", sizeof("HELLO DUMBv0 ready!\n"),0);
+  }
+  while(strcmp(buffer, "GDBYE") != 0) {
+    memset(buffer, 0, sizeof(buffer));
+    valRead = read(new_socket,buffer,1024);
+    //OPEN BOX//////////////////////////////////////////////////////////////
+    if(strncmp(buffer,"OPNBX", 5) == 0) {
+      if(boxes->name == NULL) {
+        send(new_socket, "Error: no boxes created\n", sizeof("Error: no boxes created\n"),0);
+      }
+      //printf("%s\n", buffer);
+      char* target = (char*) malloc(256 * sizeof(char));
+      int i = 0;
+      while(buffer[i] != ' '){
+        i++;
+      }
+      i++;
+      int targetCounter = 0;
+      while(buffer[i] != '\0') {
+        target[targetCounter] = buffer[i];
+        targetCounter++;
+        i++;
+      }
+      while(boxes->next != NULL) {
+        if(strcmp(target, boxes->name) == 0) {
+          send(new_socket, "Success! Message box is now open.\n", sizeof("Success! Message box is now open.\n"), 0);
+          //mutex stuff
+          while(strncmp(buffer,"CLSBX",0) != 0) {
+            //all other commands when a box is open will create error catchers when no box is open or it tries to open another box in here
+            memset(buffer, 0, sizeof(buffer));
+            valRead = read(new_socket,buffer,1024);
+          }
+        }
+        else boxes = boxes->next;
+      }
+    }
+    //////////////////////////////////////////////////////////////////////
+
+    //CLOSE BOX//////////////////////////////////////////////////////////
+    if(strncmp(buffer,"CLSBX",5) == 0) {
+      //unlock mutex stuff
+    }
+    ////////////////////////////////////////////////////////////////////
+
+    //CREAT////////////////////////////////////////////////////////////
+    if(strncmp(buffer,"CREAT",5) == 0) {
+
+    }
+    //////////////////////////////////////////////////////////////////
+
+    //DELBX//////////////////////////////////////////////////////////
+    if(strncmp(buffer,"DELBX",5) == 0) {
+
+    }
+    ////////////////////////////////////////////////////////////////
+    send(new_socket, buffer, sizeof(buffer), 0);
+  }
+}
+int main (int argc, char** argv) {
+  struct messages* temp = (struct messages*) malloc(sizeof(struct messages));
+  temp->msg = NULL;
+  temp->next = NULL;
+  struct mailBox* mailBoxes = (struct mailBox*) malloc(sizeof(struct mailBox));
+  mailBoxes->name = NULL;
+  mailBoxes->next = NULL;
+  mailBoxes->first = temp;
+  struct thread_vars vars;
+  vars.box = mailBoxes;
+  //SOCKE STUFF DW ABOUT IT////////////////////////////////////
+  int server_fd, newSocket, valRead;
+  struct sockaddr_in address;
+  int opt = 1;
+  int addrLen = sizeof(address);
+  char buffer[1024] = {0};
+  if((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
+    perror("socket failed");
+    exit(EXIT_FAILURE);
+  }
+
+  if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt))) {
+    perror("setsockopt");
+    exit(EXIT_FAILURE);
+  }
+
+  address.sin_family = AF_INET;
+  address.sin_addr.s_addr = INADDR_ANY;
+  address.sin_port = htons(atoi(argv[1]));
+
+  if(bind(server_fd, (struct sockaddr*) &address, sizeof(address)) < 0) {
+    perror("bind failed");
+    exit(EXIT_FAILURE);
+  }
+
+  if(listen(server_fd, 10) < 0) {
+    perror("listen");
+    exit(EXIT_FAILURE);
+  }
+  /////////////////////////////////////////////////////////////
+  while(1) {
+    if((newSocket = accept(server_fd, (struct sockaddr*) &address, (socklen_t *) &addrLen)) < 0) {
+      perror("accept");
+      exit(EXIT_FAILURE);
+    }
+    printf("ACCEPTING NEW SOCKET\n");
+    //printf("outside of thread socket: %d\n", newSocket);
+    pthread_t tid;
+    vars.socket = newSocket;
+    pthread_create(&(tid), NULL, threadRequests, (void*) &vars);
+    pthread_detach(tid);
+  }
+  return 0;
+}
