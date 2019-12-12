@@ -1,0 +1,19 @@
+Test Case 1: (One Client)
+Create box then opening it and put messages inside. (shows that boxes retain the info)
+Called next until one message is left, close and try to delete, it throws and error. (shows to check if it iterates through the boxes correctly).
+Opening the box back up again calling next, close, and then delete. Then create a box with the same name. (shows that the box was deleted correctly)
+
+Test Case 2: (multiple clients)
+Three mailboxes created from separate clients respectively, then a client deletes one that another one made, throws no errors. Then someone tries to open it, eventually getting thrown an error. (displaying that the boxes exists in shared space)
+A mailBox is opened and messages are put inside and then it is closed. Another client opens the aforementioned box and calls next on all the messages, only error thrown is that the box is empty, returning all the correct messages (displaying that boxes store messages in shared space correctly)
+
+Test Case 3: (locking)
+Client opens one mailBox and another tries to open, close, and delete it but is thrown errors that it is currently opened by someone else, that is not their opened box, and someone is using it so they cannot delete it. (showing that the correct locks are in place)
+Client both try to create the same mailbox at the same time, resulting in only one mailBox being made, one client will get an error saying that it already exists. (synchronizing threads so there is no deadlock or overlap in same mailBoxes)
+
+Test Case 4: (edge cases)
+Client tries to close, put, and next when they have no box open, since they do not have access to those commands.
+One client is creating a mailBox while another client is trying to open the same name of the mailBox that is currently being made. The one opening it is thrown an error that it does not exist yet, or they open it with a delay. (shows deadlocking is avoided and how synchronized the strings are).
+
+Test Case 5: (pushing limits)
+10 mailBoxes are created each putting 20 messages inside, 5 different clients will open two mailboxes each and calling next on all the messages. Then deleting the boxes they have just closed after reading the messages. (just to try to incorporate everything together the best we could).
